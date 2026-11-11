@@ -1,0 +1,15 @@
+{
+  "provenance": "Selected non-identity settings shared by three stored JSON parser definitions retrieved using GET on 2026-11-11. A stored definition is not proof of the required create-request properties.",
+  "settings": {
+    "type": "JSON",
+    "encoding": "UTF-8",
+    "headerContent": "$:0",
+    "isSingleLineContent": false,
+    "isDefault": true,
+    "language": "en_US",
+    "logTypeTestRequestVersion": 0,
+    "parserSequence": 0,
+    "isParserWrittenOnce": false,
+    "shouldTokenizeOriginalText": true
+  }
+}

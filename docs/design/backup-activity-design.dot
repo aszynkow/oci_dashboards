@@ -1,0 +1,60 @@
+digraph BackupActivity {
+  graph [newrank=true, rankdir=TB, bgcolor="#F5F7FB", pad="0.38", nodesep="0.72", ranksep="0.36", dpi=165,
+    fontname="Helvetica", fontsize=24, labelloc=t,
+    label=<<B>OCI Block Volume Backup Activity</B><BR/><FONT POINT-SIZE="14" COLOR="#526078">Deployment sequence and deployed event pipeline • native events only</FONT>>];
+  node [shape=box, style="rounded,filled", fillcolor="white", color="#D5DDE9", penwidth=1.3,
+    fontname="Helvetica", fontsize=12, fontcolor="#17263C", margin="0.20,0.14"];
+  edge [color="#7F8FA5", arrowsize=0.7, penwidth=1.5, fontname="Helvetica", fontsize=10, fontcolor="#526078"];
+
+  subgraph cluster_deploy {
+    label=<<B>A · DEPLOYMENT ON YOUR COMPUTER</B>>; fontsize=15; fontcolor="#243B61";
+    style="rounded,filled"; fillcolor="#EAF0F8"; color="#CED9E8"; margin=20;
+    d1 [label=<<B>1 · Read terraform.tfvars</B><BR/><FONT POINT-SIZE="11">Terraform console in a temporary variable-only module<BR/>Resolves defaults and types; no OCI calls</FONT>>, width=5.7];
+    d2 [label=<<B>2 · Read selected OCI profile</B><BR/><FONT POINT-SIZE="11">python scripts/deploy.py --profile PROFILE --apply<BR/>Read tenancy + region; validate identity; lock output</FONT>>, width=5.7];
+    d3 [label=<<B>3 · Generate local artifacts</B><BR/><FONT POINT-SIZE="11">Dashboard JSON • native schema JSON • TF wrapper<BR/>Stored with deployment identity in build/native-events/</FONT>>, width=5.7];
+    d4 [label=<<B>4 · Plan infrastructure + inspect changes</B><BR/><FONT POINT-SIZE="11">terraform get -update → init → validate<BR/>plan -out=deployment.tfplan → show -json<BR/>Resolve home region + namespace; reject prohibited deletes</FONT>>, width=5.7];
+    d5 [fillcolor="#F2EAFF", color="#8855C8", penwidth=2.5, width=5.7,
+      label=<<FONT COLOR="#67349E"><B>5 · PYTHON SDK SCHEMA SETUP</B></FONT><BR/>
+      <FONT POINT-SIZE="11">Direct function call: native_schema.install()<BR/><BR/>
+      Read source / parser / field metadata and ownership<BR/>
+      → Create or update custom fields<BR/>
+      → Test JSON extraction with a synthetic fixture<BR/>
+      → <B>Save parser (upsert_parser)</B><BR/>
+      → Save source linked to the parser<BR/><BR/>
+      <B>Runs after plan, before Terraform apply.</B><BR/>
+      Failure stops step 6; earlier field writes may remain.<BR/>
+      No local-exec, separate process or runtime collector.</FONT>>];
+    d6 [label=<<B>6 · Apply the saved Terraform plan</B><BR/><FONT POINT-SIZE="11">terraform apply -input=false deployment.tfplan<BR/>Provision event pipeline, IAM (if enabled), log group<BR/>and dashboard / saved searches</FONT>>, width=5.7];
+    d7 [label=<<B>7 · Save deployment receipt</B><BR/><FONT POINT-SIZE="11">terraform output -json → receipt.json<BR/>Preserve build/native-events/ and Terraform state</FONT>>, width=5.7];
+    d1 -> d2 -> d3 -> d4;
+    d4 -> d5 [color="#8855C8", penwidth=2];
+    d5 -> d6 [label="Only on success", color="#8855C8", penwidth=2];
+    d6 -> d7;
+  }
+
+  subgraph cluster_runtime {
+    label=<<B>B · DEPLOYED IN OCI · PROFILE REGION</B>>; fontsize=15; fontcolor="#243B61";
+    style="rounded,filled"; fillcolor="#EDF5F4"; color="#CCDEDA"; margin=20;
+    r1 [label=<<B>Block Volume completion Events</B><BR/><FONT POINT-SIZE="11">Backup creation + cross-region copy outcomes<BR/>Events rules scoped to configured source compartments</FONT>>, width=5.0];
+    r2 [label=<<B>OCI Streaming</B><BR/><FONT POINT-SIZE="11">New single-partition stream or dedicated existing stream<BR/>Retained messages buffer delivery</FONT>>, width=5.0];
+    r3 [label=<<B>Connector Hub</B><BR/><FONT POINT-SIZE="11">Streaming → Log Analytics<BR/>Starts at earliest retained messages (TRIM_HORIZON)</FONT>>, width=5.0];
+    r4 [fillcolor="#F2EAFF", color="#8855C8", penwidth=2,
+      label=<<B>Log Analytics: parse + store events</B><BR/><FONT POINT-SIZE="11">Custom fields + JSON parser + source: Python step 5<BR/>Log group + connector wiring: Terraform step 6<BR/>Parser maps eventTime and native event/status fields</FONT>>, width=5.0];
+    r5 [label=<<B>Saved searches</B><BR/><FONT POINT-SIZE="11">Deduplicate eventID; classify success / failure / unknown<BR/>24-hour and 7-day counts; 30-day history + trends<BR/>Later successes do not erase earlier failure events</FONT>>, width=5.0];
+    r6 [label=<<B>OCI Console Management Dashboard</B><BR/><FONT POINT-SIZE="11">Generated JSON imported by Terraform<BR/>15 native tiles, tables and histogram widgets<BR/>Green = success • Red = failure • Grey = unknown</FONT>>, width=5.0];
+    r7 [shape=note, fillcolor="#FFF7E8", color="#D9B777",
+      label=<<B>What this solution can establish</B><BR/><FONT POINT-SIZE="11">Recorded backup/copy operation outcomes.<BR/>It does not verify current recoverability, policy coverage<BR/>or destination-backup availability.<BR/>No events can mean quiet activity or broken ingestion.</FONT>>, width=5.0];
+    r1 -> r2 -> r3 -> r4 -> r5 -> r6;
+    r6 -> r7 [style=invis];
+  }
+  {rank=same; d1; r1}
+  {rank=same; d2; r2}
+  {rank=same; d3; r3}
+  {rank=same; d5; r4}
+  {rank=same; d6; r5}
+  {rank=same; d7; r6}
+  d5 -> r4 [style=dashed, constraint=false, color="#8855C8", penwidth=2,
+    label="Defines schema\nthrough OCI APIs"];
+  foot [shape=plain, label=<<FONT POINT-SIZE="11" COLOR="#526078"><B>Modes:</B> --prepare ends at 3 • --plan ends at 4 • --apply runs 1–7<BR/><B>Authentication:</B> existing OCI API-key profile • Terraform discovers home region / namespace • optional service IAM in home region<BR/>Schema setup runs at deployment time only. There is no collector, Function, VM, scheduler or custom backup metric.</FONT>>];
+  d7 -> foot [style=invis]; r7 -> foot [style=invis];
+}

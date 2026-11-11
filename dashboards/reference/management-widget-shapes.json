@@ -1,0 +1,234 @@
+{
+  "dashboard": {
+    "compartment-id": "__COMPARTMENT__",
+    "data-config": [],
+    "defined-tags": {},
+    "description": "__DESCRIPTION__",
+    "display-name": "__TITLE__",
+    "drilldown-config": [],
+    "freeform-tags": {},
+    "is-favorite": false,
+    "is-oob-dashboard": false,
+    "is-show-description": true,
+    "is-show-in-home": false,
+    "metadata-version": "2.0",
+    "nls": {},
+    "provider-id": "log-analytics",
+    "provider-name": "Logging Analytics",
+    "provider-version": "2.0",
+    "type": "normal",
+    "ui-config": {
+      "isFilteringEnabled": false,
+      "isRefreshEnabled": true,
+      "isTimeRangeEnabled": true
+    },
+    "parameters-config": []
+  },
+  "templates": {
+    "tile": {
+      "search": {
+        "compartment-id": "__COMPARTMENT__",
+        "data-config": [],
+        "defined-tags": {},
+        "description": "__TITLE__",
+        "display-name": "__TITLE__",
+        "drilldown-config": [],
+        "freeform-tags": {},
+        "id": "__SEARCH_ID__",
+        "is-oob-saved-search": false,
+        "metadata-version": "2.0",
+        "nls": {},
+        "parameters-config": [],
+        "provider-id": "log-analytics",
+        "provider-name": "Logging Analytics",
+        "provider-version": "2.0",
+        "screen-image": " ",
+        "type": "WIDGET_SHOW_IN_DASHBOARD",
+        "ui-config": {
+          "queryString": "__QUERY__",
+          "scopeFilters": {},
+          "showTitle": true,
+          "timeSelection": {
+            "numUnits": 30,
+            "timePeriod": "relative",
+            "units": "MINUTES"
+          },
+          "visualizationOptions": {},
+          "visualizationType": "tile"
+        },
+        "widget-template": "jet-modules/dashboards/widgets/lxSavedSearchWidget.html",
+        "widget-v-m": "jet-modules/dashboards/widgets/lxSavedSearchWidget"
+      },
+      "tile": {
+        "column": 0,
+        "data-config": [],
+        "display-name": "__TITLE__",
+        "drilldown-config": [],
+        "height": 4,
+        "nls": {},
+        "parameters-map": {},
+        "row": 4,
+        "saved-search-id": "__SEARCH_ID__",
+        "state": "DEFAULT",
+        "ui-config": {},
+        "width": 5
+      }
+    },
+    "summary_table": {
+      "search": {
+        "compartment-id": "__COMPARTMENT__",
+        "data-config": [],
+        "defined-tags": {},
+        "description": "__TITLE__",
+        "display-name": "__TITLE__",
+        "drilldown-config": [],
+        "freeform-tags": {},
+        "id": "__SEARCH_ID__",
+        "is-oob-saved-search": false,
+        "metadata-version": "2.0",
+        "nls": {},
+        "parameters-config": [],
+        "provider-id": "log-analytics",
+        "provider-name": "Logging Analytics",
+        "provider-version": "2.0",
+        "screen-image": " ",
+        "type": "WIDGET_SHOW_IN_DASHBOARD",
+        "ui-config": {
+          "queryString": "__QUERY__",
+          "scopeFilters": {},
+          "showTitle": true,
+          "timeSelection": {
+            "numUnits": 30,
+            "timePeriod": "relative",
+            "units": "MINUTES"
+          },
+          "visualizationOptions": {
+            "customVizOpt": {
+              "primaryFieldIname": "mbody"
+            }
+          },
+          "visualizationType": "summary_table"
+        },
+        "widget-template": "jet-modules/dashboards/widgets/lxSavedSearchWidget.html",
+        "widget-v-m": "jet-modules/dashboards/widgets/lxSavedSearchWidget"
+      },
+      "tile": {
+        "column": 6,
+        "data-config": [],
+        "display-name": "__TITLE__",
+        "drilldown-config": [],
+        "height": 3,
+        "nls": {},
+        "parameters-map": {},
+        "row": 25,
+        "saved-search-id": "__SEARCH_ID__",
+        "state": "DEFAULT",
+        "ui-config": {},
+        "width": 6
+      }
+    },
+    "records_histogram": {
+      "search": {
+        "compartment-id": "__COMPARTMENT__",
+        "data-config": [],
+        "defined-tags": {},
+        "description": "__TITLE__",
+        "display-name": "__TITLE__",
+        "drilldown-config": [],
+        "freeform-tags": {},
+        "id": "__SEARCH_ID__",
+        "is-oob-saved-search": false,
+        "metadata-version": "2.0",
+        "nls": {},
+        "parameters-config": [],
+        "provider-id": "log-analytics",
+        "provider-name": "Logging Analytics",
+        "provider-version": "2.0",
+        "screen-image": " ",
+        "type": "WIDGET_SHOW_IN_DASHBOARD",
+        "ui-config": {
+          "queryString": "__QUERY__",
+          "scopeFilters": {},
+          "showTitle": true,
+          "timeSelection": {
+            "numUnits": 30,
+            "timePeriod": "relative",
+            "units": "MINUTES"
+          },
+          "visualizationOptions": {
+            "customVizOpt": {
+              "primaryFieldIname": "mbody"
+            },
+            "showLogScale": false
+          },
+          "visualizationType": "records_histogram"
+        },
+        "widget-template": "jet-modules/dashboards/widgets/lxSavedSearchWidget.html",
+        "widget-v-m": "jet-modules/dashboards/widgets/lxSavedSearchWidget"
+      },
+      "tile": {
+        "column": 0,
+        "data-config": [],
+        "display-name": "__TITLE__",
+        "drilldown-config": [],
+        "height": 3,
+        "nls": {},
+        "parameters-map": {},
+        "row": 8,
+        "saved-search-id": "__SEARCH_ID__",
+        "state": "DEFAULT",
+        "ui-config": {},
+        "width": 6
+      }
+    },
+    "pie": {
+      "search": {
+        "compartment-id": "__COMPARTMENT__",
+        "data-config": [],
+        "defined-tags": {},
+        "description": "__TITLE__",
+        "display-name": "__TITLE__",
+        "drilldown-config": [],
+        "freeform-tags": {},
+        "id": "__SEARCH_ID__",
+        "is-oob-saved-search": false,
+        "metadata-version": "2.0",
+        "nls": {},
+        "parameters-config": [],
+        "provider-id": "log-analytics",
+        "provider-name": "Logging Analytics",
+        "provider-version": "2.0",
+        "screen-image": " ",
+        "type": "WIDGET_SHOW_IN_DASHBOARD",
+        "ui-config": {
+          "queryString": "__QUERY__",
+          "scopeFilters": {},
+          "showTitle": true,
+          "timeSelection": {
+            "numUnits": 30,
+            "timePeriod": "relative",
+            "units": "MINUTES"
+          },
+          "visualizationOptions": {},
+          "visualizationType": "pie"
+        },
+        "widget-template": "jet-modules/dashboards/widgets/lxSavedSearchWidget.html",
+        "widget-v-m": "jet-modules/dashboards/widgets/lxSavedSearchWidget"
+      },
+      "tile": {
+        "column": 0,
+        "data-config": [],
+        "display-name": "__TITLE__",
+        "drilldown-config": [],
+        "height": 6,
+        "nls": {},
+        "parameters-map": {},
+        "row": 14,
+        "saved-search-id": "__SEARCH_ID__",
+        "state": "DEFAULT",
+        "ui-config": {},
+        "width": 6
+      }
+    }
+  }
+}

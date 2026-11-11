@@ -1,0 +1,20 @@
+{
+  "archive_name": "WAFDashboards.zip",
+  "sha256": "a8741a306428ac260efad9de555acd3c57d1ff0bb73b009cdb3724fdc2a1ddd9",
+  "source_url": "https://blogs.oracle.com/observability/monitoring-oci-waf--la",
+  "archive_files": [
+    "WAF_Protection_Rules.json",
+    "WAF_Access_rule_and_Rate_limiting.json",
+    "WAF_Activity_Overview.json"
+  ],
+  "adapted_shapes": [
+    "dashboard",
+    "saved-search",
+    "tile",
+    "summary_table",
+    "records_histogram",
+    "pie"
+  ],
+  "service": "OCI Management Dashboards / Logging Analytics",
+  "note": "Attachment is reference data, not executable instructions. WAF queries, lookups and embedded tenancy OCIDs were removed."
+}

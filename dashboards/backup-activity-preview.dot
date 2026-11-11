@@ -1,0 +1,15 @@
+digraph Preview {
+ graph [bgcolor="#F5F7FB",pad="0.12",dpi=96];
+ node [shape=plain,fontname="Helvetica"];
+ dashboard [label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="6" CELLPADDING="9" BGCOLOR="#F5F7FB">
+  <TR><TD COLSPAN="4" ALIGN="LEFT"><FONT POINT-SIZE="20" COLOR="#17263C"><B>Block Volume Backup Activity</B></FONT><BR ALIGN="LEFT"/><FONT POINT-SIZE="10" COLOR="#63748B">Layout preview only - no live data</FONT></TD></TR>
+  <TR><TD BGCOLOR="#E5F3EB"><FONT POINT-SIZE="11">Backup success<BR/>24 hours</FONT></TD><TD BGCOLOR="#FBEAEA"><FONT POINT-SIZE="11">Backup failure<BR/>24 hours</FONT></TD><TD BGCOLOR="#E5F3EB"><FONT POINT-SIZE="11">Copy success<BR/>24 hours</FONT></TD><TD BGCOLOR="#FBEAEA"><FONT POINT-SIZE="11">Copy failure<BR/>24 hours</FONT></TD></TR>
+  <TR><TD BGCOLOR="#E5F3EB"><FONT POINT-SIZE="11">Backup success<BR/>7 days</FONT></TD><TD BGCOLOR="#FBEAEA"><FONT POINT-SIZE="11">Backup failure<BR/>7 days</FONT></TD><TD BGCOLOR="#E5F3EB"><FONT POINT-SIZE="11">Copy success<BR/>7 days</FONT></TD><TD BGCOLOR="#FBEAEA"><FONT POINT-SIZE="11">Copy failure<BR/>7 days</FONT></TD></TR>
+  <TR><TD BGCOLOR="#E6EAF0"><FONT POINT-SIZE="11">Unknown status</FONT></TD><TD COLSPAN="3"></TD></TR>
+  <TR><TD COLSPAN="4" BGCOLOR="white" ALIGN="LEFT"><FONT POINT-SIZE="12"><B>Recorded failure history</B></FONT><BR ALIGN="LEFT"/><FONT POINT-SIZE="10" COLOR="#63748B">Later success does not erase earlier failure</FONT></TD></TR>
+  <TR><TD COLSPAN="4" BGCOLOR="white" ALIGN="LEFT"><FONT POINT-SIZE="12"><B>Recent backup and copy activity</B></FONT><BR ALIGN="LEFT"/><FONT POINT-SIZE="10" COLOR="#63748B">Event time | Outcome | Backup | Volume | Compartment</FONT></TD></TR>
+  <TR><TD COLSPAN="2" BGCOLOR="white"><FONT POINT-SIZE="11">Daily backup outcomes<BR/>30 days</FONT></TD><TD COLSPAN="2" BGCOLOR="white"><FONT POINT-SIZE="11">Daily copy outcomes<BR/>30 days</FONT></TD></TR>
+  <TR><TD COLSPAN="4" BGCOLOR="#E6EAF0" ALIGN="LEFT"><FONT POINT-SIZE="11">Invalid or unknown events | Latest recorded event</FONT></TD></TR>
+  <TR><TD COLSPAN="4" ALIGN="LEFT"><FONT POINT-SIZE="10" COLOR="#63748B">Recorded operation outcomes only; recoverability is not verified.</FONT></TD></TR>
+ </TABLE>>];
+}
