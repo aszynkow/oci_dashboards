@@ -4,7 +4,7 @@ This repository generates an OCI Console **Management Dashboard JSON** and deplo
 
 ```mermaid
 flowchart LR
-  B[Block Volume backup and copy completion events] --> R[OCI Events rules]
+  B[Volume and volume-group backup/copy completion events] --> R[OCI Events rules]
   R --> S[OCI Streaming]
   S --> C[Connector Hub]
   C --> L[Log Analytics: native JSON parser and source]
@@ -20,7 +20,7 @@ flowchart LR
   S1 -->|On success| T
 ```
 
-The deployment region and tenancy OCID come from your existing OCI API-key profile. Terraform discovers its home region and namespace. No environment.sh is required. **Nothing has been deployed.** No backups or backup policies are created, changed or deleted.
+The deployment region and tenancy OCID come from your existing OCI API-key profile. Terraform discovers its home region and namespace. No environment.sh is required. Preparation is offline; deployment occurs only with an explicit `--apply`. The deployment code never creates, changes or deletes backups or backup policies.
 
 ## What the dashboard shows
 
@@ -28,10 +28,10 @@ Fifteen widgets use native `tile` and `summary_table` export shapes from the sup
 
 All nine numeric tiles explicitly label their final count as **Events**, using OCI’s supported custom-caption setting. See [caption verification](docs/tile-caption-fix.md).
 
-- Recorded backup-creation and copy successes/failures over 24 hours and seven days.
+- Combined individual-volume and volume-group backup/copy completion successes and failures, with 24-hour and seven-day widget defaults.
 - Unknown/conflicting completion statuses over seven days.
 - Thirty-day failure history, preserved after later successful events.
-- Recent operation details: event time/ID, backup name/OCID, volume OCID where supplied, compartment, source region, operation, source type and optional errors.
+- Recent event details: resource type (Volume / Volume group), event type/time/ID, backup name/OCID, volume/group identity, source backup IDs, event region, destination region, backup type and optional errors where supplied.
 - Separate daily backup/copy outcome tables over thirty days (deduplicated event counts by UTC day and outcome).
 - Invalid/missing event identity/time and unknown/conflicting status diagnostics.
 - Latest observed event timestamp, explicitly labelled **not ingestion health**.
@@ -40,7 +40,19 @@ Green means a recorded operation reported success; red means it reported failure
 
 Saved-search scopes use Oracle’s opaque `filters` array with the telemetry compartment and deployment region; empty Entity selections impose no entity restriction. The actual log group is constrained in the query. See [blank widget/details diagnosis and correction](docs/dashboard-ui-diagnostic.md).
 
-Queries deduplicate native `eventID` before counting outcomes. Later events with new IDs do not erase a failure. Missing/unrecognized statuses are unknown; conflicting status fields or conflicting outcomes under one ID are unknown. Only `operationSucceed` and `operationFailed` establish recorded outcomes. Native `eventTime` maps to the Oracle-defined Time field; missing/future times are excluded from outcome counts and surfaced where parseable. All fixed activity windows are rolling; daily trends use event timestamps.
+Queries deduplicate native `eventID` before counting outcomes. Later events with new IDs do not erase a failure. Missing/unrecognized statuses are unknown; conflicting status fields or conflicting outcomes under one ID are unknown. Only `operationSucceed` and `operationFailed` establish recorded outcomes. Native `eventTime` maps to the Oracle-defined Time field; missing/future times are excluded from outcome counts and surfaced where parseable. Widget defaults are rolling windows; daily trends use event timestamps. Check the effective dashboard time picker: the Console can override the saved widget defaults with its global time range.
+
+## Volume-group support and counting
+
+The same fifteen widgets include volume and volume-group completion events. There are no scope checkboxes and no Audit or collector dependency. Event types and payload paths are documented in [volume-group support](docs/volume-group-support.md).
+
+**Counts are recorded completion events, not independent backup/copy jobs or protected volumes.** A controlled two-volume group-copy test emitted one group-copy completion and two member-volume copy completions: the combined copy count is **3 events**, not three independent copy jobs. Redelivery of the same event ID is deduplicated; different member and group event IDs remain distinct. `ResourceType=Volume` does not mean the operation was initiated directly: member-copy events also use that resource type. Use the details table to distinguish resource kinds.
+
+Group-copy completion (`copyvolumegroupbackup.end`) and its native success payload were captured in a controlled Sydney-to-Melbourne test on 11 November 2026, although that type was absent from the Oracle event catalogue inspected that day. Group-backup completion is documented. Success paths were live-tested; failure variants remain conservatively classified by the same status rules and tested with synthetic fixtures. Begin events and the status-less `copyvolumegroupbackup` initiation event are excluded from completion widgets.
+
+To upgrade, rerun the existing profile-based Python deployment workflow with the existing state directory. Python adds five optional metadata fields and updates the parser before Terraform imports the generated dashboard and updates the four-type Events rules. Existing widget IDs/names, stream, source and state addresses are preserved. Newly added metadata is not automatically backfilled into previously ingested logs.
+
+Capture remains limited to the profile region and exact `inventory_compartment_ids`. Add every source compartment you need, including a group’s compartment and relevant member compartments when different. A parent selected in the dashboard does not expand capture scope. No live OCIDs or compartment selections are changed automatically by this upgrade.
 
 ## Configure and prepare
 
@@ -112,3 +124,5 @@ PYTHONPATH=src python3 -m oci_dashboards.management \
 ```
 
 Sample output is clearly synthetic and cannot be published by the sample tool. History begins when the rules start receiving events; no historical backup inventory is backfilled. Connector delivery is at least once, and records can be lost if outages exceed stream retention (default seven days). Event capture is evidence of operations, not a guarantee of complete history or recoverability. Live provider/schema permissions, parser behavior, ingestion and Console rendering remain deployment verification steps.
+
+See the [changelog](CHANGELOG.md) for release history and the differences between init1.00 and init1.01.

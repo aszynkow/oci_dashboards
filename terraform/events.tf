@@ -30,7 +30,9 @@ locals {
   events_stream_compartment_id = var.existing_stream_id != null ? data.oci_streaming_stream.existing[0].compartment_id : var.telemetry_compartment_id
   completion_types = [
     "com.oraclecloud.blockvolumes.createvolumebackup.end",
-    "com.oraclecloud.blockvolumes.copyvolumebackup.end"
+    "com.oraclecloud.blockvolumes.copyvolumebackup.end",
+    "com.oraclecloud.blockvolumes.createvolumegroupbackup.end",
+    "com.oraclecloud.blockvolumes.copyvolumegroupbackup.end"
   ]
   events_statements = [
     for compartment in var.inventory_compartment_ids :

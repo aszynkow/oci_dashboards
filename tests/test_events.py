@@ -1,7 +1,9 @@
 from copy import deepcopy
+import json
+from pathlib import Path
 import unittest
 from oci_dashboards.deploy import example_event
-from oci_dashboards.events import COPY, normalize, summarize
+from oci_dashboards.events import CREATE, COPY, GROUP_CREATE, GROUP_COPY, normalize, summarize
 
 NOW = '2026-11-10T12:00:00Z'
 
@@ -60,3 +62,56 @@ class NativeEventTests(unittest.TestCase):
         report = summarize([],NOW)
         self.assertEqual(report['coverage'],'unknown')
         self.assertEqual(report['ingestion_health'],'unverified')
+
+
+class GroupEventTests(unittest.TestCase):
+    def setUp(self):
+        self.events = json.loads((Path(__file__).parent/'fixtures/group-completion-events.json').read_text())['events']
+
+    def test_real_group_shapes_have_correct_kind_operation_and_lineage(self):
+        by_type = {e['eventType']: normalize(e, NOW) for e in self.events}
+        creation = by_type[GROUP_CREATE]
+        copied = by_type[GROUP_COPY]
+        self.assertEqual((creation['resource_type'], creation['operation'], creation['outcome']), ('Volume group', 'create', 'success'))
+        self.assertEqual(creation['group_id'], 'ocid1.volumegroup.oc1.ap-sydney-1.SAMPLE_GROUP')
+        self.assertEqual((copied['resource_type'], copied['operation'], copied['outcome']), ('Volume group', 'copy', 'success'))
+        self.assertEqual(copied['source_group_backup_id'], creation['resource_id'])
+        self.assertEqual(copied['destination_region'], 'ap-melbourne-1')
+        self.assertTrue(copied['resource_id'].startswith('ocid1.volumegroupbackup.oc1.ap-melbourne-1.'))
+        self.assertEqual(copied['backup_type'], 'FULL')
+        self.assertIsNone(copied['group_id'])  # Never invent unavailable group identity.
+        member = by_type[COPY]
+        self.assertEqual(member['resource_type'], 'Volume')  # Not necessarily a direct copy.
+        self.assertEqual(member['source_volume_backup_id'], member['resource_id'])
+
+    def test_completion_counts_keep_group_and_member_events_distinct_and_deduplicate_delivery(self):
+        report = summarize(self.events + deepcopy(self.events), NOW)
+        self.assertEqual(report['recorded_outcomes'], {'success': 4, 'failure': 0, 'unknown': 0})
+        # One group backup + two member copies + one group copy. Requests/begins are excluded.
+        self.assertEqual(report['invalid_records'], 4)
+        self.assertEqual(report['coverage'], 'unknown')
+
+    def test_group_missing_conflicting_failed_and_future_status_contract(self):
+        source = next(e for e in self.events if e['eventType'] == GROUP_COPY)
+        for variant in ('missing','conflicting','failed','future'):
+            e = deepcopy(source)
+            if variant == 'missing':e['data']['additionalDetails'].pop('status')
+            if variant == 'conflicting':e['status'] = 'operationFailed'
+            if variant == 'failed':e['data']['additionalDetails']['status'] = 'operationFailed'
+            if variant == 'future':e['eventTime'] = '2026-11-11T10:00:00Z'
+            with self.subTest(variant=variant):
+                self.assertEqual(normalize(e, NOW)['outcome'], 'failure' if variant == 'failed' else 'unknown')
+
+    def test_later_group_success_does_not_erase_a_failed_event(self):
+        success = next(e for e in self.events if e['eventType'] == GROUP_COPY)
+        failed = deepcopy(success)
+        failed['eventID'] = 'SYNTHETIC-FAILED-ATTEMPT'
+        failed['data']['additionalDetails']['status'] = 'operationFailed'
+        self.assertEqual(summarize([failed, success], NOW)['recorded_outcomes'], {'success':1,'failure':1,'unknown':0})
+
+    def test_group_request_or_begin_is_not_success_even_with_a_success_status(self):
+        e = deepcopy(self.events[0])
+        for kind in ('com.oraclecloud.blockvolumes.createvolumegroupbackup.begin', 'com.oraclecloud.blockvolumes.copyvolumegroupbackup'):
+            e['eventType'] = kind
+            e['data']['additionalDetails']['status'] = 'operationSucceed'
+            with self.subTest(kind=kind):self.assertFalse(normalize(e, NOW)['valid'])

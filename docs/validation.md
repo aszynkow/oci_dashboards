@@ -2,7 +2,7 @@
 
 The previous collector implementation and its tests were removed when the scope changed to native operation events. The current checks cover the active event pipeline, dashboard and deployment path.
 
-**81 tests passed** using `PYTHONPATH=src .venv/bin/python -m unittest discover -s tests -q` with OCI SDK 2.190.0. The project targets OCI SDK 2.190+. Current Oracle documentation and the downloaded current SDK/provider source tree were consulted for supported APIs. Unit checks mock profile/credential loading. A separate attempted read-only metadata inspection used the selected profile; see the apply-failure notes below.
+**89 tests passed** using `PYTHONPATH=src .venv/bin/python -m unittest discover -s tests -q` with OCI SDK 2.190.0. The project targets OCI SDK 2.190+. Current Oracle documentation and the downloaded current SDK/provider source tree were consulted for supported APIs. Unit checks mock profile/credential loading. A separate attempted read-only metadata inspection used the selected profile; see the apply-failure notes below.
 
 Tests cover:
 
@@ -91,3 +91,13 @@ The manual bkcptest1 backup established delivery through Events, Streaming and C
 ## Numeric tile caption (11 November 2026)
 
 All nine count tiles now use Oracle-verified custom-caption settings: inputTextEnabled=true, changeLabel=Events and hideLabel=false. The unsaved OCI preview displayed Events with count 1; source inspection verified the exact serialization and tile read path. All 81 tests, compilation and isolated offline artifact checks passed. No deployment or saved-search save was run. See [caption fix evidence](tile-caption-fix.md).
+
+## Volume and volume-group completion support (11 November 2026)
+
+All fifteen widgets now include four native completion types. Existing saved-search names/IDs were compared against the init1.00 baseline and remain identical. Five optional scalar metadata paths were added, including the captured nested group ID and srcVolumeGroupBackupId lineage. The Events rules use an explicit four-type allowlist, excluding begins and the status-less group-copy initiation event.
+
+All 89 local tests passed. Eight additional tests exercise sanitized captured group payloads, nested metadata extraction through actual SDK models, event-vs-job counting, duplicate delivery, unknown/conflicting/future statuses, preserved failure history, excluded initiation events, operation-family filters and retained metadata after event-ID aggregation. The fixture is explicitly synthetic and contains no live identifiers or names.
+
+Both CLI/API dashboard definitions and their PNG preview were regenerated reproducibly. Graphviz architecture/preview images were visually checked. Python compilation, Terraform formatting and git diff whitespace checks passed. Offline preparation using the existing profile/tfvars in isolated build/group-support-check verified the new fields and stable identifiers without touching deployment state.
+
+The preceding authorized live experiment separately captured group-backup completion, group-copy initiation, two member-copy completions and whole-group copy completion. Eight non-persistent 24h/7d candidate result assertions and minimal JSON parser path tests passed against real evidence. Temporary test capture/IAM were removed. Those checks validate the event shapes and classification, not a deployed version of this new schema. Runtime parsing of the new field references requires the operator-run schema/apply workflow; no schema writes, Terraform plan/apply, backup operations or production dashboard changes were made during this implementation turn. See [volume-group support](volume-group-support.md).

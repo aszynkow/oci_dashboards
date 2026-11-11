@@ -1,0 +1,145 @@
+{
+  "data_mode": "synthetic",
+  "provenance": "Sanitized event shapes from the authorized 11 November 2026 Sydney-to-Melbourne live test; no live identifiers or names.",
+  "events": [
+    {
+      "eventType": "com.oraclecloud.blockvolumes.createvolumegroupbackup.begin",
+      "cloudEventsVersion": "0.1",
+      "eventTypeVersion": "2.0",
+      "source": "BlockVolumes",
+      "eventTime": "2026-11-10T10:00:00Z",
+      "contentType": "application/json",
+      "data": {
+        "compartmentId": "ocid1.compartment.oc1..SAMPLE",
+        "compartmentName": "SYNTHETIC-COMPARTMENT",
+        "resourceName": "SYNTHETIC-BACKUP-1",
+        "availabilityDomain": "AD1",
+        "additionalDetails": {}
+      },
+      "eventID": "SYNTHETIC-GROUP-EVENT-1",
+      "extensions": {
+        "compartmentId": "ocid1.compartment.oc1..SAMPLE"
+      }
+    },
+    {
+      "eventType": "com.oraclecloud.blockvolumes.createvolumegroupbackup.end",
+      "cloudEventsVersion": "0.1",
+      "eventTypeVersion": "2.0",
+      "source": "BlockVolumes",
+      "eventTime": "2026-11-10T10:01:00Z",
+      "contentType": "application/json",
+      "data": {
+        "compartmentId": "ocid1.compartment.oc1..SAMPLE",
+        "compartmentName": "SYNTHETIC-COMPARTMENT",
+        "resourceName": "SYNTHETIC-BACKUP-2",
+        "resourceId": "ocid1.volumegroupbackup.oc1.ap-sydney-1.SAMPLE_SOURCE",
+        "additionalDetails": {
+          "isPreventDeletionEnabled": false,
+          "sourceType": "MANUAL",
+          "volumeGroupId": {
+            "id": "ocid1.volumegroup.oc1.ap-sydney-1.SAMPLE_GROUP"
+          },
+          "status": "operationSucceed",
+          "backupType": "FULL"
+        }
+      },
+      "eventID": "SYNTHETIC-GROUP-EVENT-2",
+      "extensions": {
+        "compartmentId": "ocid1.compartment.oc1..SAMPLE"
+      }
+    },
+    {
+      "eventType": "com.oraclecloud.blockvolumes.copyvolumegroupbackup",
+      "cloudEventsVersion": "0.1",
+      "eventTypeVersion": "2.0",
+      "source": "BlockVolumes",
+      "eventTime": "2026-11-10T10:02:00Z",
+      "contentType": "application/json",
+      "data": {
+        "compartmentId": "ocid1.compartment.oc1..SAMPLE",
+        "compartmentName": "SYNTHETIC-COMPARTMENT",
+        "resourceName": "SYNTHETIC-BACKUP-3",
+        "resourceId": "ocid1.volumegroupbackup.oc1.ap-sydney-1.SAMPLE_SOURCE",
+        "availabilityDomain": "AD1",
+        "additionalDetails": {}
+      },
+      "eventID": "SYNTHETIC-GROUP-EVENT-3",
+      "extensions": {
+        "compartmentId": "ocid1.compartment.oc1..SAMPLE"
+      }
+    },
+    {
+      "eventType": "com.oraclecloud.blockvolumes.copyvolumebackup.end",
+      "cloudEventsVersion": "0.1",
+      "eventTypeVersion": "2.0",
+      "source": "BlockVolumes",
+      "eventTime": "2026-11-10T10:03:00Z",
+      "contentType": "application/json",
+      "data": {
+        "compartmentId": "ocid1.compartment.oc1..SAMPLE",
+        "compartmentName": "SYNTHETIC-COMPARTMENT",
+        "resourceName": "SYNTHETIC-BACKUP-4",
+        "resourceId": "ocid1.volumebackup.oc1.ap-sydney-1.SAMPLE_MEMBER_1",
+        "additionalDetails": {
+          "isPreventDeletionEnabled": false,
+          "destinationRegion": "ap-melbourne-1",
+          "sourceBackupId": "ocid1.volumebackup.oc1.ap-sydney-1.SAMPLE_MEMBER_1",
+          "status": "operationSucceed"
+        }
+      },
+      "eventID": "SYNTHETIC-GROUP-EVENT-4",
+      "extensions": {
+        "compartmentId": "ocid1.compartment.oc1..SAMPLE"
+      }
+    },
+    {
+      "eventType": "com.oraclecloud.blockvolumes.copyvolumebackup.end",
+      "cloudEventsVersion": "0.1",
+      "eventTypeVersion": "2.0",
+      "source": "BlockVolumes",
+      "eventTime": "2026-11-10T10:04:00Z",
+      "contentType": "application/json",
+      "data": {
+        "compartmentId": "ocid1.compartment.oc1..SAMPLE",
+        "compartmentName": "SYNTHETIC-COMPARTMENT",
+        "resourceName": "SYNTHETIC-BACKUP-5",
+        "resourceId": "ocid1.volumebackup.oc1.ap-sydney-1.SAMPLE_MEMBER_2",
+        "additionalDetails": {
+          "isPreventDeletionEnabled": false,
+          "destinationRegion": "ap-melbourne-1",
+          "sourceBackupId": "ocid1.volumebackup.oc1.ap-sydney-1.SAMPLE_MEMBER_2",
+          "status": "operationSucceed"
+        }
+      },
+      "eventID": "SYNTHETIC-GROUP-EVENT-5",
+      "extensions": {
+        "compartmentId": "ocid1.compartment.oc1..SAMPLE"
+      }
+    },
+    {
+      "eventType": "com.oraclecloud.blockvolumes.copyvolumegroupbackup.end",
+      "cloudEventsVersion": "0.1",
+      "eventTypeVersion": "2.0",
+      "source": "BlockVolumes",
+      "eventTime": "2026-11-10T10:05:00Z",
+      "contentType": "application/json",
+      "data": {
+        "compartmentId": "ocid1.compartment.oc1..SAMPLE",
+        "compartmentName": "SYNTHETIC-COMPARTMENT",
+        "resourceName": "SYNTHETIC-BACKUP-6",
+        "resourceId": "ocid1.volumegroupbackup.oc1.ap-melbourne-1.SAMPLE_COPY",
+        "additionalDetails": {
+          "isPreventDeletionEnabled": false,
+          "destinationRegion": "ap-melbourne-1",
+          "srcVolumeGroupBackupId": "ocid1.volumegroupbackup.oc1.ap-sydney-1.SAMPLE_SOURCE",
+          "status": "operationSucceed",
+          "backupType": "FULL"
+        }
+      },
+      "eventID": "SYNTHETIC-GROUP-EVENT-6",
+      "extensions": {
+        "compartmentId": "ocid1.compartment.oc1..SAMPLE"
+      }
+    }
+  ]
+}

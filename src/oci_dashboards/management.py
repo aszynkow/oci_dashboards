@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 import re
 from .config import load, validate as validate_config
-from .events import CREATE, COPY, names
+from .events import CREATE, COPY, GROUP_CREATE, GROUP_COPY, CREATION_TYPES, COPY_TYPES, SUPPORTED, names
 
 ROOT = Path(__file__).resolve().parents[2]
 REFERENCE = ROOT/'dashboards/reference/management-widget-shapes.json'
@@ -39,6 +39,10 @@ def field(config, key):
     return "'" + names(config['scope_id'])['label_prefix'] + key + "'"
 
 
+def query_values(values):
+    return ', '.join("'" + value + "'" for value in values)
+
+
 def base_query(config, *, valid=True):
     n = names(config['scope_id'])
     # STRING eval values are case-folded by Log Analytics. Restore ISO T/Z
@@ -56,10 +60,13 @@ def base_query(config, *, valid=True):
              "(DataStatus != null and RootStatus != null and DataStatus != RootStatus), 1, 0)"
              " | eval Outcome = if(ConflictingStatus = 1, literal(unknown), if(Status = 'operationSucceed', literal(success), "
              "if(Status = 'operationFailed', literal(failure), literal(unknown))))"
-             f" | eval Operation = if(EventType = '{CREATE}', literal('backup creation'), literal('backup copy'))"
+             f" | eval Operation = if(EventType in ({query_values(CREATION_TYPES)}), literal('backup creation'), literal('backup copy'))"
+             f" | eval ResourceType = if(EventType in ({query_values((GROUP_CREATE, GROUP_COPY))}), literal('Volume group'), literal('Volume'))"
              f" | eval Region = literal('{config['region']}')"
-             f" | where EventType in ('{CREATE}', '{COPY}')")
-    context = {'ResourceName': 'ResourceName', 'BackupOCID': 'ResourceOCID', 'VolumeOCID': 'VolumeOCID',
+             f" | where EventType in ({query_values(SUPPORTED)})")
+    context = {'GroupOCID': 'GroupOCID', 'SourceGroupBackupOCID': 'SourceGroupBackupOCID',
+               'SourceVolumeBackupOCID': 'SourceVolumeBackupOCID', 'DestinationRegion': 'DestinationRegion',
+               'BackupType': 'BackupType', 'ResourceName': 'ResourceName', 'BackupOCID': 'ResourceOCID', 'VolumeOCID': 'VolumeOCID',
                'Compartment': 'CompartmentName', 'CompartmentOCID': 'CompartmentOCID',
                'SourceType': 'SourceType', 'ErrorCode': 'ErrorCode', 'ErrorMessage': 'ErrorMessage', 'Message': 'Message'}
     query += ''.join(f" | eval {alias} = {field(config, key)}" for alias, key in context.items())
@@ -68,7 +75,7 @@ def base_query(config, *, valid=True):
         # explicitly, even when Log Analytics falls back to an ingestion timestamp.
         query += (" | where EventID != null and EventID != '' and EventTime != null and toDate(EventTime) <= now()"
                   " | eval EventDate = toDate(EventTime)")
-        preserved = ['Time', 'EventDate', 'EventType', 'EventTime', 'Status', 'Operation', 'Region', *context]
+        preserved = ['Time', 'EventDate', 'EventType', 'EventTime', 'Status', 'Operation', 'ResourceType', 'Region', *context]
         query += ' | stats ' + ', '.join(f'latest({name}) as {name}' for name in preserved)
         query += (", distinctcount(Outcome) as OutcomeVariants, latest(Outcome) as Outcome by EventID"
                   " | eval Outcome = if(OutcomeVariants > 1, literal(unknown), Outcome) | sort -EventDate")
@@ -84,31 +91,31 @@ def widgets(config):
     base = base_query(config)
     result = []
     for days, window in [(1, '24 hours'), (7, '7 days')]:
-        for operation, event_type in [('backups', CREATE), ('copies', COPY)]:
+        for operation, event_types in [('backups', CREATION_TYPES), ('copies', COPY_TYPES)]:
             for outcome, indicator in [('success', '🟢'), ('failure', '🔴')]:
                 title = f'{indicator} Recorded {operation}: {outcome} — {window}'
                 result.append({'key': f'{operation}-{outcome}-{days}d', 'title': title, 'viz': 'tile', 'days': days,
-                    'query': base + f" | where EventType = '{event_type}' and Outcome = literal('{outcome}') | stats count as Events"})
+                    'query': base + f" | where EventType in ({query_values(event_types)}) and Outcome = literal('{outcome}') | stats count as Events"})
     result.append({'key': 'unknown-status', 'title': '⚪ Recorded operations with unknown status — 7 days',
         'viz': 'tile', 'days': 7, 'query': base + " | where Outcome = literal(unknown) | stats count as Events"})
     details = base
-    columns = 'Indicator, EventTime, Operation, Outcome, ResourceName, BackupOCID, VolumeOCID, Compartment, CompartmentOCID, Region, SourceType, ErrorCode, ErrorMessage, Message, EventID'
+    columns = 'Indicator, EventTime, Operation, ResourceType, Outcome, ResourceName, BackupOCID, VolumeOCID, GroupOCID, SourceGroupBackupOCID, SourceVolumeBackupOCID, Compartment, CompartmentOCID, Region, DestinationRegion, BackupType, SourceType, ErrorCode, ErrorMessage, Message, EventType, EventID'
     result += [
         {'key': 'failure-history', 'title': '🔴 Recorded failures — later success does not erase earlier failure',
          'viz': 'summary_table', 'days': 30, 'query': details + " | where Outcome = literal(failure) | fields " + columns},
         {'key': 'recent-activity', 'title': 'Recorded backup and copy completion events — 7 days',
          'viz': 'summary_table', 'days': 7, 'query': details + ' | fields ' + columns}]
-    for operation, event_type in [('Backup creation', CREATE), ('Backup copy', COPY)]:
+    for operation, event_types in [('Backup creation', CREATION_TYPES), ('Backup copy', COPY_TYPES)]:
         result.append({'key': operation + '-trend', 'title': operation + ' outcomes by day — 30 days',
             'viz': 'summary_table', 'days': 30,
-            'query': base + f" | where EventType = '{event_type}' | eval Day = dateSet(EventDate, hour, 0, minute, 0, sec, 0, msec, 0) | stats count as Events by Day, Outcome | sort Day"})
+            'query': base + f" | where EventType in ({query_values(event_types)}) | eval Day = dateSet(EventDate, hour, 0, minute, 0, sec, 0, msec, 0) | stats count as Events by Day, Outcome | sort Day"})
     result += [
         {'key': 'invalid-records', 'title': '⚪ Invalid event identity/time or unknown/conflicting status — 30 days',
          'viz': 'summary_table', 'days': 30,
-         'query': base_query(config, valid=False) + " | where EventID = null or EventID = '' or EventTime = null or toDate(EventTime) = null or toDate(EventTime) > now() or Outcome = literal(unknown) | fields Time, EventTime, EventID, EventType, DetailStatus, DataStatus, RootStatus, Outcome"},
+         'query': base_query(config, valid=False) + " | where EventID = null or EventID = '' or EventTime = null or toDate(EventTime) = null or toDate(EventTime) > now() or Outcome = literal(unknown) | fields Time, EventTime, EventID, EventType, ResourceType, DetailStatus, DataStatus, RootStatus, Outcome"},
         {'key': 'last-observed', 'title': '⚪ Latest recorded event — activity timestamp, NOT ingestion health',
          'viz': 'summary_table', 'days': 30,
-         'query': details + ' | head limit=1 | fields EventTime, Operation, Outcome, BackupOCID, Region, EventID'}]
+         'query': details + ' | head limit=1 | fields EventTime, Operation, ResourceType, Outcome, BackupOCID, GroupOCID, SourceGroupBackupOCID, Region, DestinationRegion, EventID'}]
     return result
 
 
@@ -170,8 +177,9 @@ def build(config, compartment_id=None, display_name=None):
         'display-name': (display_name or 'OCI Block Volume Backup Activity') + ' — ' + scope,
         'dashboard-id': identifier('managementdashboard', scope, compartment_id),
         'screen-image': 'data:image/png;base64,' + base64.b64encode(PREVIEW.read_bytes()).decode('ascii'),
-        'description': ('Native Block Volume completion events only. 🟢 recorded operation success; 🔴 recorded failure; '
-            '⚪ unknown/invalid data. Counts are observed events, not recovery coverage. No data is UNKNOWN. '
+        'description': ('Native volume and volume-group completion events. 🟢 recorded success; 🔴 recorded failure; '
+            '⚪ unknown/invalid data. Counts are events, not independent jobs or recovery coverage. '
+            'Group and member copy completions count separately. No data is UNKNOWN. '
             'Latest activity is not ingestion health. History starts when event capture is enabled. '
             'No inventory, recovery-target, available-backup or destination-copy verification is performed.'),
         'freeform-tags': {'backup_activity_scope': scope}, 'tiles': [], 'saved-searches': [],
@@ -182,7 +190,7 @@ def build(config, compartment_id=None, display_name=None):
         search, tile = template['search'], template['tile']
         saved_id = identifier('managementsavedsearch', scope, 'native-events:' + definition['key'])
         search.update({'compartment-id': compartment_id, 'id': saved_id,
-                       'display-name': scope + ' — ' + definition['title'], 'description': definition['title'],
+                       'display-name': scope + ' — ' + definition['title'], 'description': definition['title'] + '. Includes volume and volume-group completion events; group and member copies count separately, not as independent jobs.',
                        'freeform-tags': {'backup_activity_scope': scope}})
         ui = search['ui-config']
         # Oracle's tile can infer Time for this multi-stage query. Pin the

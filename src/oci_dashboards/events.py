@@ -4,12 +4,21 @@ import hashlib
 
 CREATE = 'com.oraclecloud.blockvolumes.createvolumebackup.end'
 COPY = 'com.oraclecloud.blockvolumes.copyvolumebackup.end'
-SUPPORTED = (CREATE, COPY)
+GROUP_CREATE = 'com.oraclecloud.blockvolumes.createvolumegroupbackup.end'
+GROUP_COPY = 'com.oraclecloud.blockvolumes.copyvolumegroupbackup.end'
+CREATION_TYPES = (CREATE, GROUP_CREATE)
+COPY_TYPES = (COPY, GROUP_COPY)
+SUPPORTED = (CREATE, COPY, GROUP_CREATE, GROUP_COPY)
 # Every field is scalar. EventID is intentionally case-sensitive in native payloads.
 PATHS = {
     'EventID': '$.eventID', 'EventType': '$.eventType', 'EventTime': '$.eventTime',
     'ResourceOCID': '$.data.resourceId', 'ResourceName': '$.data.resourceName',
     'VolumeOCID': '$.data.additionalDetails.volumeId',
+    'GroupOCID': '$.data.additionalDetails.volumeGroupId.id',
+    'SourceGroupBackupOCID': '$.data.additionalDetails.srcVolumeGroupBackupId',
+    'SourceVolumeBackupOCID': '$.data.additionalDetails.sourceBackupId',
+    'DestinationRegion': '$.data.additionalDetails.destinationRegion',
+    'BackupType': '$.data.additionalDetails.backupType',
     'CompartmentOCID': '$.data.compartmentId', 'CompartmentName': '$.data.compartmentName',
     'StatusDetail': '$.data.additionalDetails.status', 'StatusData': '$.data.status', 'StatusRoot': '$.status',
     'SourceType': '$.data.additionalDetails.sourceType',
@@ -59,11 +68,18 @@ def normalize(event, now):
         valid = timestamp <= at(now)
     except (AttributeError, TypeError, ValueError):
         timestamp, valid = None, False
+    event_type = event.get('eventType')
+    group = details.get('volumeGroupId')
+    group_id = group.get('id') if isinstance(group, dict) else None
     identity = event.get('eventID')
     valid = valid and isinstance(identity, str) and bool(identity.strip()) and event.get('eventType') in SUPPORTED
     return {'event_id': identity.strip() if isinstance(identity, str) else None, 'event_time': event.get('eventTime'),
-            'operation': 'create' if event.get('eventType') == CREATE else 'copy',
+            'operation': 'create' if event_type in CREATION_TYPES else 'copy' if event_type in COPY_TYPES else 'unknown',
+            'resource_type': 'Volume group' if event_type in (GROUP_CREATE, GROUP_COPY) else 'Volume' if event_type in (CREATE, COPY) else 'Unknown',
             'resource_id': data.get('resourceId'), 'volume_id': details.get('volumeId'),
+            'group_id': group_id, 'source_group_backup_id': details.get('srcVolumeGroupBackupId'),
+            'source_volume_backup_id': details.get('sourceBackupId'),
+            'destination_region': details.get('destinationRegion'), 'backup_type': details.get('backupType'),
             'status': status, 'outcome': outcome if valid else 'unknown', 'valid': valid}
 
 

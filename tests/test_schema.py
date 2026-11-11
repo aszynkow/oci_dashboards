@@ -122,6 +122,25 @@ class SchemaTests(unittest.TestCase):
         self.assertIn('field_maps',oci.util.to_dict(parser))
         self.assertFalse(any('backup' in kind for kind,_,_ in writes))
 
+    def test_group_paths_extract_scalar_identity_and_copy_lineage_from_captured_shapes(self):
+        import json
+        from pathlib import Path
+        from oci_dashboards.events import GROUP_CREATE, GROUP_COPY
+        events=json.loads((Path(__file__).parent/'fixtures/group-completion-events.json').read_text())['events']
+        expected={GROUP_CREATE: {'GroupOCID':'ocid1.volumegroup.oc1.ap-sydney-1.SAMPLE_GROUP'},
+                  GROUP_COPY: {'SourceGroupBackupOCID':'ocid1.volumegroupbackup.oc1.ap-sydney-1.SAMPLE_SOURCE',
+                               'DestinationRegion':'ap-melbourne-1','BackupType':'FULL'}}
+        for kind,values in expected.items():
+            with self.subTest(kind=kind):
+                self.client=FakeAnalytics()
+                self.definition['example']=next(e for e in events if e['eventType']==kind)
+                self.install()
+                parser=self.client.writes[-2][1]
+                result=self.client.test_parser('namespace',parser).data.entries[0].fields
+                for label,value in values.items():
+                    mapping=next(m for m in parser.field_maps if m.field.display_name==self.definition['label_prefix']+label)
+                    self.assertEqual(result[mapping.parser_field_name],value)
+
     def test_repeat_deployment_upserts_only_owned_content_with_etags(self):
         self.install()
         self.client.writes=[]

@@ -35,15 +35,15 @@ digraph BackupActivity {
   subgraph cluster_runtime {
     label=<<B>B · DEPLOYED IN OCI · PROFILE REGION</B>>; fontsize=15; fontcolor="#243B61";
     style="rounded,filled"; fillcolor="#EDF5F4"; color="#CCDEDA"; margin=20;
-    r1 [label=<<B>Block Volume completion Events</B><BR/><FONT POINT-SIZE="11">Backup creation + cross-region copy outcomes<BR/>Events rules scoped to configured source compartments</FONT>>, width=5.0];
+    r1 [label=<<B>Volume + volume-group completion Events</B><BR/><FONT POINT-SIZE="11">Backup creation + cross-region copy outcomes<BR/>Events rules scoped to configured source compartments</FONT>>, width=5.0];
     r2 [label=<<B>OCI Streaming</B><BR/><FONT POINT-SIZE="11">New single-partition stream or dedicated existing stream<BR/>Retained messages buffer delivery</FONT>>, width=5.0];
     r3 [label=<<B>Connector Hub</B><BR/><FONT POINT-SIZE="11">Streaming → Log Analytics<BR/>Starts at earliest retained messages (TRIM_HORIZON)</FONT>>, width=5.0];
     r4 [fillcolor="#F2EAFF", color="#8855C8", penwidth=2,
       label=<<B>Log Analytics: parse + store events</B><BR/><FONT POINT-SIZE="11">Custom fields + JSON parser + source: Python step 5<BR/>Log group + connector wiring: Terraform step 6<BR/>Parser maps eventTime and native event/status fields</FONT>>, width=5.0];
     r5 [label=<<B>Saved searches</B><BR/><FONT POINT-SIZE="11">Deduplicate eventID; classify success / failure / unknown<BR/>24-hour and 7-day counts; 30-day history + trends<BR/>Later successes do not erase earlier failure events</FONT>>, width=5.0];
-    r6 [label=<<B>OCI Console Management Dashboard</B><BR/><FONT POINT-SIZE="11">Generated JSON imported by Terraform<BR/>15 native tiles, tables and histogram widgets<BR/>Green = success • Red = failure • Grey = unknown</FONT>>, width=5.0];
+    r6 [label=<<B>OCI Console Management Dashboard</B><BR/><FONT POINT-SIZE="11">Generated JSON imported by Terraform<BR/>15 native numeric tiles and summary tables<BR/>Green = success • Red = failure • Grey = unknown</FONT>>, width=5.0];
     r7 [shape=note, fillcolor="#FFF7E8", color="#D9B777",
-      label=<<B>What this solution can establish</B><BR/><FONT POINT-SIZE="11">Recorded backup/copy operation outcomes.<BR/>It does not verify current recoverability, policy coverage<BR/>or destination-backup availability.<BR/>No events can mean quiet activity or broken ingestion.</FONT>>, width=5.0];
+      label=<<B>What this solution can establish</B><BR/><FONT POINT-SIZE="11">Recorded completion events, not independent jobs.<BR/>Group/member copy completions count separately.<BR/>It does not verify current recoverability, policy coverage<BR/>or destination-backup availability.<BR/>No events can mean quiet activity or broken ingestion.</FONT>>, width=5.0];
     r1 -> r2 -> r3 -> r4 -> r5 -> r6;
     r6 -> r7 [style=invis];
   }

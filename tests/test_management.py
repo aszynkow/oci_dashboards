@@ -5,7 +5,7 @@ import unittest
 from oci_dashboards.config import load
 from oci_dashboards.deploy import ROOT
 from oci_dashboards.management import build, api_payload, widgets, validate, PREVIEW
-from oci_dashboards.events import names, CREATE, COPY
+from oci_dashboards.events import names, CREATE, COPY, GROUP_CREATE, GROUP_COPY, SUPPORTED
 import oci
 
 
@@ -136,6 +136,29 @@ class ManagementTests(unittest.TestCase):
             self.assertLess(query.index(' by EventID'),query.index('stats count as Events by Day, Outcome'))
             self.assertIn('dateSet(EventDate, hour, 0, minute, 0, sec, 0, msec, 0)',query)
             self.assertTrue(query.endswith('sort Day'))
+
+    def test_every_widget_accepts_group_completions_but_never_request_events(self):
+        for item in widgets(self.config):
+            query=item['query']
+            for event_type in SUPPORTED:self.assertIn(event_type, query)
+            self.assertNotIn("'com.oraclecloud.blockvolumes.copyvolumegroupbackup'",query)
+            self.assertNotIn('.begin',query)
+            self.assertIn('ResourceType',query)
+            if item['key'].startswith('backups-'):
+                self.assertIn(f"where EventType in ('{CREATE}', '{GROUP_CREATE}')",query)
+            if item['key'].startswith('copies-'):
+                self.assertIn(f"where EventType in ('{COPY}', '{GROUP_COPY}')",query)
+
+    def test_group_and_member_details_preserved_after_event_deduplication(self):
+        definitions={item['key']:item for item in widgets(self.config)}
+        for key in ('recent-activity','failure-history','last-observed'):
+            query=definitions[key]['query']
+            for column in ('ResourceType','GroupOCID','SourceGroupBackupOCID','DestinationRegion'):
+                self.assertIn('latest('+column+') as '+column,query)
+                self.assertIn(column,query.rsplit(' | fields ',1)[1])
+        description=self.dashboard['description']
+        self.assertIn('not independent jobs',description)
+        self.assertIn('Group and member copy completions count separately',description)
 
     def test_native_shapes_and_real_sdk_api_models_match(self):
         for search in self.dashboard['saved-searches']:
