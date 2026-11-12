@@ -1,5 +1,16 @@
 # Changelog
 
+## init1.03 — 2026-11-12
+
+Documentation-only update showcasing both deployed dashboards in README's **What the dashboards show** section.
+
+- Added Activity and Coverage screenshots captured from the OCI Console, plus links to the deployed dashboards and full-size images.
+- Explained that screenshots are dated examples, live links require existing OCI access, and the global time picker can override default windows in widget labels.
+- Added screenshot provenance and capture notes under `docs/screenshots/README.md`. Browser tabs, address bar and DevTools are excluded from the page captures.
+- Kept the architecture diagram at the beginning of README. Dashboard, collector, IAM and Terraform behavior are unchanged.
+
+Validation: both screenshots were visually inspected; PNG dimensions, README image references and deployment-link parameters were checked, and Git whitespace checks passed. No resources were deployed or modified.
+
 ## init1.02 — 2026-11-12
 
 Adds an optional, separate **Block Volume Backup Coverage** dashboard and a scheduled read-only OCI Function. The existing Activity dashboard and event ingestion remain in place. Coverage reuses the exact configured compartment list and is disabled by default.

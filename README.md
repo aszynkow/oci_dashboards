@@ -10,7 +10,19 @@ Coverage includes Terraform-managed Function invocation logs with 30-day retenti
 
 The deployment region and tenancy OCID come from your existing OCI API-key profile. Terraform discovers its home region and namespace. No environment.sh is required. Preparation is offline; deployment occurs only with an explicit `--apply`. The deployment code never creates, changes or deletes backups or backup policies.
 
-## What the dashboard shows
+## What the dashboards show
+
+These are two separate OCI Console dashboards. The screenshots below were captured from the deployed environment on **12 November 2026**; their numbers are static examples of that deployment, not live health indicators. Deployed links require an OCI sign-in and permission to access this tenancy. For another deployment, use its dashboard IDs and compartment instead.
+
+### Activity dashboard
+
+Shows recorded individual-volume and volume-group backup/copy completion outcomes, event details and failure history.
+
+![Deployed OCI Block Volume Backup Activity dashboard: backup and copy outcome tiles with failure history](docs/screenshots/activity-dashboard.png)
+
+[Open the deployed Activity dashboard](https://cloud.oracle.com/management-dashboard/dashboards?moduleType=DASHBOARDS&dashId=ocid1.managementdashboard.oc1..aaaaaaaa6sfmlki42houjan464zh2lok3wdooh7azrhkwzi5tywy5khw3jna&region=ap-sydney-1&compartmentId=ocid1.compartment.oc1..aaaaaaaadd4reahxbwpu3usth6y2j4uzclwknj76ento4q63pajpekn6qjvq) · [View full-size screenshot](docs/screenshots/activity-dashboard.png)
+
+The Activity screenshot uses the Console-wide **Last 124 days** selection. The global picker determines the effective query window and can override the 24-hour/seven-day defaults shown in widget labels. The deployed link above omits the frozen screenshot dates and Cloud Shell settings.
 
 Fifteen widgets use native `tile` and `summary_table` export shapes from the supplied WAF reference archive:
 
@@ -29,6 +41,16 @@ Green means a recorded operation reported success; red means it reported failure
 Saved-search scopes use Oracle’s opaque `filters` array with the telemetry compartment and deployment region; empty Entity selections impose no entity restriction. The actual log group is constrained in the query. See [blank widget/details diagnosis and correction](docs/dashboard-ui-diagnostic.md).
 
 Queries deduplicate native `eventID` before counting outcomes. Later events with new IDs do not erase a failure. Missing/unrecognized statuses are unknown; conflicting status fields or conflicting outcomes under one ID are unknown. Only `operationSucceed` and `operationFailed` establish recorded outcomes. Native `eventTime` maps to the Oracle-defined Time field; missing/future times are excluded from outcome counts and surfaced where parseable. Widget defaults are rolling windows; daily trends use event timestamps. Check the effective dashboard time picker: the Console can override the saved widget defaults with its global time range.
+
+### Coverage dashboard (optional)
+
+Shows each observed block volume once, evaluated against its configured recovery target using AVAILABLE, unexpired individual or group-member backups. It includes covered/not-covered counts and percentages, unknown and approaching-deadline counts, volume detail tables, collection health and snapshot history.
+
+![Deployed OCI Block Volume Backup Coverage dashboard: six observed volumes, coverage percentages and approaching-deadline details](docs/screenshots/coverage-dashboard.png)
+
+[Open the deployed Coverage dashboard](https://cloud.oracle.com/management-dashboard/dashboards?moduleType=DASHBOARDS&dashId=ocid1.managementdashboard.oc1..aaaaaaaal3izp2xm5n2ijtuzvlnhhgbbuxqimr4pj4ku4xkqnqjwnztda4za&region=ap-sydney-1&compartmentId=ocid1.compartment.oc1..aaaaaaaadd4reahxbwpu3usth6y2j4uzclwknj76ento4q63pajpekn6qjvq) · [View full-size screenshot](docs/screenshots/coverage-dashboard.png)
+
+Amber volumes remain included in Covered. The Approaching deadline table orders volumes by deadline and shows hours remaining **at collection**, with UTC collection time. Missing permissions, incomplete scope and stale data remain explicit unknowns. Selecting root/subcompartments in the Console does not expand the Function's configured inventory scope. See [Coverage setup, definitions and limitations](docs/coverage.md).
 
 ## Volume-group support and counting
 
@@ -121,4 +143,4 @@ PYTHONPATH=src python3 -m oci_dashboards.management \
 
 Sample output is clearly synthetic and cannot be published by the sample tool. History begins when the rules start receiving events; no historical backup inventory is backfilled. Connector delivery is at least once, and records can be lost if outages exceed stream retention (default seven days). Event capture is evidence of operations, not a guarantee of complete history or recoverability. Live provider/schema permissions, parser behavior, ingestion and Console rendering remain deployment verification steps.
 
-See the [changelog](CHANGELOG.md) for release history and the changes in init1.00, init1.01 and init1.02.
+See the [changelog](CHANGELOG.md) for release history and the changes in init1.00, init1.01, init1.02 and init1.03.
