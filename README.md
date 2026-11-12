@@ -93,6 +93,8 @@ The script reads only public tenancy/region identifiers from the profile; creden
 
 ## Deploy when ready
 
+For automatic Coverage image publication, complete [Docker, Colima and OCIR authentication](#docker-colima-and-ocir-authentication) before running `--apply`. Activity-only deployments do not require Docker login.
+
 ```bash
 python3 scripts/deploy.py --profile YOUR_PROFILE --plan
 # Only when you choose to deploy:
@@ -117,9 +119,34 @@ The existing topic option remains: omit `alarm_destination_topic_ids` to create 
 
 ## Optional Backup Coverage dashboard
 
-Set `enable_coverage = true` to add a separate fifteen-widget dashboard with observed volume counts, covered/not-covered percentages, approaching deadlines, per-volume detail tables and collection health. Available individual and group-member backups qualify; one volume counts once. Missing permissions and stale inventory are unknown.
+Set `enable_coverage = true` to add a separate sixteen-widget dashboard with observed volume counts, covered/not-covered percentages, approaching deadlines, per-volume detail tables and collection health. Available individual and group-member backups qualify; one volume counts once. Missing permissions and stale inventory are unknown.
 
 In addition to your existing compartment/profile settings, supply `coverage_subnet_ids` (existing Function subnets with OCI API access). On `--apply`, the deployer creates/reuses a private OCIR repository in separate Terraform state, derives the image URI, builds/pushes the Function image and pins its digest. `coverage_function_image` is an optional existing-image override. Recovery targets, workload/per-volume overrides, region scope and the hourly schedule are configurable. The same Python `--prepare`, `--plan`, `--apply` workflow handles both dashboards; coverage is disabled by default. Docker/Colima must be available and Docker must already be logged in to OCIR for automatic publication. Before first image publication, `--plan` shows the OCIR plan and a labelled preliminary dashboard preview; the exact digest-based plan follows publication. Build/publication checkpoints survive interruptions and revalidate saved local/remote image identities before skipping work. No local-exec is used. See [the two-stage deployment flow](docs/coverage.md#prepare-and-deploy-when-ready).
+
+### Docker, Colima and OCIR authentication
+
+Deployment uses two separate authentication mechanisms:
+
+| Purpose | Credentials | Used by |
+| --- | --- | --- |
+| OCI API calls and Terraform | Selected profile in `~/.oci/config`, plus its referenced private key | Python deployer and Terraform |
+| Push the Function image to OCIR | OCIR username and an OCI auth token supplied through `docker login` | Docker CLI |
+
+**Colima provides the local Docker engine.** Selecting `--docker-context colima` tells Docker which engine to use; it does not sign Docker into OCIR.
+
+Before deploying with automatic image publication, sign in to the target registry. For example, for Sydney:
+
+```bash
+docker --context colima login syd.ocir.io
+```
+
+Use the registry hostname selected for your deployment region. Enter your OCIR username when prompted, typically `<tenancy-namespace>/<username>`. If your identity-domain/federation setup requires it, include the domain: `<tenancy-namespace>/<identity-domain-name>/<username>` (for example, `oracleidentitycloudservice` for the applicable federated setup). Use an **OCI auth token** as the password, rather than your Console password or API private key. See [Oracle's OCIR login instructions](https://docs.oracle.com/en-us/iaas/Content/Registry/Tasks/registrypushingimagesusingthedockercli.htm).
+
+Docker reads authentication configuration from `$DOCKER_CONFIG/config.json`, or `~/.docker/config.json` by default. If configured with `credsStore` or `credHelpers`, it retrieves credentials from the selected helper, such as macOS Keychain. Otherwise, credentials may be stored under `auths` as base64-encoded values; **base64 is not encryption**. See [Docker credential storage](https://docs.docker.com/reference/cli/docker/login/#credential-stores).
+
+The deployment script checks for Docker credential configuration, then runs the image push. It does not perform login, generate auth tokens, or copy credentials into source code, Terraform variables or image checkpoints. A configured credential helper is not proof of a valid login or repository permission: Docker validates those during the push. Use the same Docker configuration/user for login and deployment.
+
+The deployed Function uses an **OCI resource principal** and IAM policies to read inventory and publish telemetry. Your local Docker login credentials are not passed into the Function.
 
 See [coverage architecture, IAM, image preparation, deployment and limitations](docs/coverage.md), [example settings](config/backup-coverage.example.json), [dashboard API JSON](dashboards/backup-coverage.management.api.json) and [design preview](dashboards/backup-coverage-preview.png).
 
