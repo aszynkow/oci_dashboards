@@ -1,24 +1,12 @@
-# OCI Block Volume Backup Activity
+# OCI Block Volume Backup Dashboards
 
-This repository generates an OCI Console **Management Dashboard JSON** and deploys its native event ingestion with Terraform. The collector has been removed. There are no Functions, VM, scheduler, inventory scanner, checkpoint bucket, dynamic groups or custom backup metrics.
+![OCI deployment architecture: native backup activity and optional read-only inventory coverage](docs/design/backup-dashboard-architecture.png)
 
-```mermaid
-flowchart LR
-  B[Volume and volume-group backup/copy completion events] --> R[OCI Events rules]
-  R --> S[OCI Streaming]
-  S --> C[Connector Hub]
-  C --> L[Log Analytics: native JSON parser and source]
-  L --> Q[Saved searches]
-  Q --> D[OCI Console Management Dashboard]
-  T[Terraform apply] --> R
-  T --> S
-  T --> C
-  T --> D
-  P[Python deployer] --> V[Plan and deletion checks]
-  V --> S1[Python SDK schema setup and parser test]
-  S1 --> L
-  S1 -->|On success| T
-```
+[Full-size PNG](docs/design/backup-dashboard-architecture.png) · [Editable SVG](docs/design/backup-dashboard-architecture.svg)
+
+This repository generates OCI Console **Management Dashboard JSON** and deploys it with Terraform. The default **Activity** dashboard uses native completion events without a collector. An optional, separate **Coverage** dashboard uses a read-only OCI Function invoked hourly by Resource Scheduler. Both reuse the configured compartment list. No VM is required. See [coverage setup and design](docs/coverage.md).
+
+Coverage includes Terraform-managed Function invocation logs with 30-day retention and structured collection/upload diagnostics. See [verifying a Coverage run](docs/coverage.md#runtime-diagnostics-and-verifying-a-run); scheduler success alone does not prove that inventory reached the dashboard.
 
 The deployment region and tenancy OCID come from your existing OCI API-key profile. Terraform discovers its home region and namespace. No environment.sh is required. Preparation is offline; deployment occurs only with an explicit `--apply`. The deployment code never creates, changes or deletes backups or backup policies.
 
@@ -36,7 +24,7 @@ All nine numeric tiles explicitly label their final count as **Events**, using O
 - Invalid/missing event identity/time and unknown/conflicting status diagnostics.
 - Latest observed event timestamp, explicitly labelled **not ingestion health**.
 
-Green means a recorded operation reported success; red means it reported failure; grey means unknown or invalid. There is no recovery-coverage percentage, overdue-volume/policy inventory or verified DR coverage. A success event does not verify that a backup remains AVAILABLE or restorable today. Empty results do not mean healthy or prove zero failures: event capture, buffering and permissions must be verified separately. Quiet activity cannot serve as a heartbeat.
+Green means a recorded operation reported success; red means it reported failure; grey means unknown or invalid. The Activity dashboard does not calculate recovery-coverage percentages or overdue-volume inventory. The optional Coverage dashboard evaluates available backups separately; neither dashboard verifies restore success or required DR copies. A success event does not verify that a backup remains AVAILABLE or restorable today. Empty results do not mean healthy or prove zero failures: event capture, buffering and permissions must be verified separately. Quiet activity cannot serve as a heartbeat.
 
 Saved-search scopes use Oracle’s opaque `filters` array with the telemetry compartment and deployment region; empty Entity selections impose no entity restriction. The actual log group is constrained in the query. See [blank widget/details diagnosis and correction](docs/dashboard-ui-diagnostic.md).
 
@@ -77,7 +65,7 @@ inventory_compartment_ids = ["ocid1.compartment.oc1..YOUR_EVENT_SOURCE"]
 create_iam_policy = true
 ```
 
-`inventory_compartment_ids` is retained as the event source compartment allowlist; no inventory scan runs. Each rule filters the exact compartment. List children explicitly. One deployment handles the profile region; deploy independent scopes/state directories in additional regions if required. Do not pass old `enable_collector`, Function, recovery-target or Events-observer inputs: these have been removed.
+`inventory_compartment_ids` is the exact event source compartment allowlist and, when coverage is enabled, the inventory scope. Each rule filters the exact compartment. List children explicitly. One deployment handles the profile region; deploy independent scopes/state directories in additional regions if required. Do not pass legacy `enable_collector` or Events-observer inputs. The new optional coverage inputs are described below and in [coverage setup](docs/coverage.md).
 
 The script reads only public tenancy/region identifiers from the profile; credentials remain in ~/.oci/config and its referenced key files. `--prepare` uses Terraform's real HCL parser in a provider-free scratch module and writes local artifacts only. It neither initializes the provider nor calls OCI. Optional standard `TF_VAR_*` inputs remain supported, with explicit tfvars precedence; an explicitly selected profile is authoritative for region/tenancy. `TF_CLI_ARGS*` and debug logging overrides are excluded.
 
@@ -101,9 +89,17 @@ The operator’s latest run passed parser save and then exposed a source-name mi
 
 When streaming partition quota is exhausted, set `existing_stream_id` to a dedicated existing ACTIVE stream in the profile region instead of allocating a new partition. Its compartment is discovered for IAM; its contents/retention are not changed by the setup. A reused stream is consumed, not exclusively adopted: choose one intended for these JSON backup events. The connector reads retained messages from TRIM_HORIZON, so shared streams also forward their retained content. The already managed stream pool is retained to preserve partial-apply state.
 
-With `create_iam_policy=true`, Terraform creates two policies in the home region: scoped Events-rule stream production, and scoped Connector stream consumption/Log Analytics upload. There are **no dynamic groups**. With false, equivalent policies must already exist; statements are exposed in Terraform outputs and the apply receipt. Deployment-profile and dashboard-reader group permissions are prerequisites, not self-granted by the deployment.
+With `create_iam_policy=true`, Terraform creates two policies in the home region: scoped Events-rule stream production, and scoped Connector stream consumption/Log Analytics upload. Activity alone creates **no dynamic groups**. Enabling coverage adds two dynamic groups and one scoped policy when this flag is true. With false, equivalent policies must already exist; statements are exposed in Terraform outputs and the apply receipt. Deployment-profile and dashboard-reader group permissions are prerequisites, not self-granted by the deployment.
 
 The existing topic option remains: omit `alarm_destination_topic_ids` to create a Notifications topic, or supply existing regional topic OCIDs to reuse them. **No notification subscriptions, alert rules or collector alarms are created by the event dashboard.** The topic is available for separately configured alerting and is not an ingestion-health signal.
+
+## Optional Backup Coverage dashboard
+
+Set `enable_coverage = true` to add a separate fifteen-widget dashboard with observed volume counts, covered/not-covered percentages, approaching deadlines, per-volume detail tables and collection health. Available individual and group-member backups qualify; one volume counts once. Missing permissions and stale inventory are unknown.
+
+In addition to your existing compartment/profile settings, supply `coverage_subnet_ids` (existing Function subnets with OCI API access). On `--apply`, the deployer creates/reuses a private OCIR repository in separate Terraform state, derives the image URI, builds/pushes the Function image and pins its digest. `coverage_function_image` is an optional existing-image override. Recovery targets, workload/per-volume overrides, region scope and the hourly schedule are configurable. The same Python `--prepare`, `--plan`, `--apply` workflow handles both dashboards; coverage is disabled by default. Docker/Colima must be available and Docker must already be logged in to OCIR for automatic publication. Before first image publication, `--plan` shows the OCIR plan and a labelled preliminary dashboard preview; the exact digest-based plan follows publication. Build/publication checkpoints survive interruptions and revalidate saved local/remote image identities before skipping work. No local-exec is used. See [the two-stage deployment flow](docs/coverage.md#prepare-and-deploy-when-ready).
+
+See [coverage architecture, IAM, image preparation, deployment and limitations](docs/coverage.md), [example settings](config/backup-coverage.example.json), [dashboard API JSON](dashboards/backup-coverage.management.api.json) and [design preview](dashboards/backup-coverage-preview.png).
 
 ## Files and local checks
 
@@ -125,4 +121,4 @@ PYTHONPATH=src python3 -m oci_dashboards.management \
 
 Sample output is clearly synthetic and cannot be published by the sample tool. History begins when the rules start receiving events; no historical backup inventory is backfilled. Connector delivery is at least once, and records can be lost if outages exceed stream retention (default seven days). Event capture is evidence of operations, not a guarantee of complete history or recoverability. Live provider/schema permissions, parser behavior, ingestion and Console rendering remain deployment verification steps.
 
-See the [changelog](CHANGELOG.md) for release history and the differences between init1.00 and init1.01.
+See the [changelog](CHANGELOG.md) for release history and the changes in init1.00, init1.01 and init1.02.

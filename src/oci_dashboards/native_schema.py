@@ -221,9 +221,10 @@ def install(client, namespace, tenancy, definition, models, *, before_parser_ups
     test_args = {key: getattr(parser, key) for key in models.TestParserPayloadDetails().swagger_types
                  if hasattr(parser, key) and getattr(parser, key) is not None}
     values = parser_test_values(client, namespace, models.TestParserPayloadDetails(**test_args))
-    if (definition['example']['eventID'] not in values
-            or definition['example']['data']['additionalDetails']['status'] not in values):
-        raise NativeSchemaError('Native JSON parser test did not extract event ID and completion status')
+    required_values = definition.get('test_values') or [definition['example']['eventID'],
+        definition['example']['data']['additionalDetails']['status']]
+    if any(value not in values for value in required_values):
+        raise NativeSchemaError('JSON parser test did not extract required fixture values')
     if before_parser_upsert:
         before_parser_upsert(parser)
     saved_parser = upsert_parser(client, namespace, parser, existing_parser).data

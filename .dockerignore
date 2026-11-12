@@ -1,0 +1,10 @@
+*
+!functions/
+functions/*
+!functions/coverage/
+!functions/coverage/**
+!src/
+src/*
+!src/oci_dashboards/
+!src/oci_dashboards/*.py
+**/__pycache__

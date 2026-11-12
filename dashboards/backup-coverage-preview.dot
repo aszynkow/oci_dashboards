@@ -1,0 +1,16 @@
+digraph coverage {
+ graph [bgcolor="#f5f5f3",pad="0.25",ranksep="0.4",nodesep="0.2",label="OCI Block Volume Backup Coverage • separate inventory dashboard",labelloc=t,fontname="Arial",fontsize=22];
+ node [shape=box,style="rounded,filled",fontname="Arial",fontsize=15,fillcolor=white,color="#d0d0d0",margin="0.2,0.15"];
+ scope [label="Same configured compartments • selected regions • hourly read-only collection"];
+ total [label="Observed volumes\n100",fillcolor="#e9edf1"];
+ green [label="Covered\n85 • 85%",fillcolor="#d8efdc"];
+ red [label="Not covered\n10 • 10%",fillcolor="#f8dddd"];
+ grey [label="Unknown\n5",fillcolor="#e2e2e2"];
+ amber [label="Approaching deadline\nIncluded in covered",fillcolor="#fff0cd"];
+ {rank=same;total;green;red;grey;amber;}
+ details [label="Covered / approaching deadline / not covered / unknown details\nVolume • compartment • region • owner • workload\nBackup identity • age • individual/group path • policy • target • reason\nAmber: earliest deadline first • hours remaining at collection • collected at UTC"];
+ health [label="Monitoring health • scope complete/incomplete • last successful collection\nAPI errors • inaccessible scopes • stale inventory becomes unknown",fillcolor="#e9edf1"];
+ trend [label="30-day snapshot history • classifications by compartment and region"];
+ note [label="Illustrative sample counts only. One volume counts once.\nAVAILABLE unexpired member backups qualify. Policy assignment alone does not.\nPartial inventory totals are lower bounds. No restore or DR-copy guarantee.",shape=note,fontsize=12];
+ scope -> total [style=invis];total -> details [style=invis];details -> health [style=invis];health -> trend [style=invis];trend -> note [style=invis];
+}

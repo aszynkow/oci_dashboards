@@ -1,0 +1,14 @@
+{
+  "scope_id": "production-block-volumes",
+  "region": "ap-sydney-1",
+  "telemetry_compartment_id": "ocid1.compartment.oc1..REPLACE_TELEMETRY",
+  "dashboard_compartment_id": "ocid1.compartment.oc1..REPLACE_DASHBOARD",
+  "inventory_compartment_ids": ["ocid1.compartment.oc1..REPLACE_SOURCE"],
+  "coverage_regions": ["ap-sydney-1"],
+  "coverage_settings": {
+    "default_target": {"target_hours": 24, "grace_hours": 0, "warning_hours": 4},
+    "workload_targets": {"critical": {"target_hours": 6, "grace_hours": 1, "warning_hours": 2}},
+    "volume_targets": {"ocid1.volume.oc1.ap-sydney-1.REPLACE_VOLUME": {"target_hours": 12, "grace_hours": 0, "warning_hours": 2}},
+    "workload_tag": "workload", "owner_tag": "owner", "stale_hours": 2
+  }
+}

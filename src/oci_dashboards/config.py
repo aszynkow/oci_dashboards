@@ -1,4 +1,4 @@
-"""Configuration for native Block Volume operation events. No inventory access."""
+"""Shared region and compartment configuration for backup dashboards."""
 import json
 import re
 from pathlib import Path

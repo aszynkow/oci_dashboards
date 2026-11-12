@@ -1,0 +1,55 @@
+{
+  "catalog": "OCI_Icons.pptx",
+  "version": "OCI Architecture Diagram Toolkit v23.1 \u2014 March 2023",
+  "sha256": "3d1c43b6af6a0a9b69a390222aa570517545d149f6da91cbd86024d9d0281be5",
+  "artwork": "Oracle and/or its affiliates; extracted original vector geometry. No custom service glyphs.",
+  "generic_use": {
+    "resource-scheduler": "Other Oracle Cloud Service; generic Console frame is diagram notation, not a service icon."
+  },
+  "icons": {
+    "functions": {
+      "catalog_service": "OCI Functions",
+      "slide": 33
+    },
+    "block-storage": {
+      "catalog_service": "Block Storage",
+      "slide": 34
+    },
+    "streaming": {
+      "catalog_service": "Streaming",
+      "slide": 37
+    },
+    "connector-hub": {
+      "catalog_service": "Service Connector Hub",
+      "slide": 37
+    },
+    "container-registry": {
+      "catalog_service": "Container Registry",
+      "slide": 38
+    },
+    "iam": {
+      "catalog_service": "IAM",
+      "slide": 39
+    },
+    "logging": {
+      "catalog_service": "Logging",
+      "slide": 40
+    },
+    "monitoring": {
+      "catalog_service": "Monitoring",
+      "slide": 40
+    },
+    "log-analytics": {
+      "catalog_service": "Logging Analytics",
+      "slide": 40
+    },
+    "events": {
+      "catalog_service": "Events",
+      "slide": 40
+    },
+    "generic-service": {
+      "catalog_service": "Other Oracle Cloud Service",
+      "slide": 46
+    }
+  }
+}

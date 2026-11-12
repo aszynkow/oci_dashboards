@@ -1,5 +1,5 @@
 # Region/tenancy come from --profile; Terraform discovers namespace/home region.
-# Native Events -> Streaming -> Connector -> Log Analytics. No collector/Function.
+# Default: native event Activity dashboard. Optional Coverage adds a scheduled Function.
 telemetry_compartment_id  = "ocid1.compartment.oc1..REPLACE_TELEMETRY"
 dashboard_compartment_id  = "ocid1.compartment.oc1..REPLACE_DASHBOARD"
 # Exact event source compartments; children must be listed explicitly.
@@ -12,3 +12,11 @@ create_iam_policy = false # Set true to create scoped native service policies.
 # If the regional streaming partition limit is exhausted, reuse a dedicated stream:
 # existing_stream_id = "ocid1.stream.oc1.ap-sydney-1.YOUR_STREAM"
 # Leave unset to provision a new one-partition stream.
+
+# Optional separate coverage dashboard; same inventory compartments as above.
+# Only these two additional inputs are needed for the automatic image workflow:
+# enable_coverage     = true
+# coverage_subnet_ids = ["ocid1.subnet.oc1.ap-sydney-1.YOUR_SUBNET"]
+# Image URI, registry/namespace, source version and repository compartment are derived.
+# Repository defaults to backup-coverage in the dashboard compartment.
+# Schedule/targets and advanced overrides: docs/coverage.md#configuration-defaults-and-overrides

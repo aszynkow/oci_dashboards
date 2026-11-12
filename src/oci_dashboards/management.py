@@ -217,7 +217,7 @@ def build(config, compartment_id=None, display_name=None):
     return result
 
 
-def validate(payload):
+def validate(payload, *, expected_tiles=15):
     for dashboard in payload['dashboards']:
         validate_screen_image(dashboard.get('screen-image'))
         for search in dashboard['saved-searches']:
@@ -225,8 +225,8 @@ def validate(payload):
         searches = {item['id']: item for item in dashboard['saved-searches']}
         if len(searches) != len(dashboard['saved-searches']):
             raise ValueError('duplicate saved search reference')
-        if len(dashboard['tiles']) != 15:
-            raise ValueError('expected 15 native activity tiles')
+        if len(dashboard['tiles']) != expected_tiles:
+            raise ValueError(f'expected {expected_tiles} native dashboard tiles')
         cells = set()
         for tile in dashboard['tiles']:
             if tile['saved-search-id'] not in searches:
@@ -238,7 +238,16 @@ def validate(payload):
                     if (row, column) in cells:
                         raise ValueError('overlapping tiles')
                     cells.add((row, column))
-        if 'WAF' in json.dumps(payload):
+        # Image base64 can contain arbitrary letters such as WAF. Inspect
+        # reference text without treating embedded PNG bytes as source content.
+        def without_images(value):
+            if isinstance(value, dict):
+                return {key: without_images(item) for key, item in value.items()
+                        if key != 'screen-image'}
+            if isinstance(value, list):
+                return [without_images(item) for item in value]
+            return value
+        if 'WAF' in json.dumps(without_images(payload)):
             raise ValueError('reference content leaked into dashboard')
 
 

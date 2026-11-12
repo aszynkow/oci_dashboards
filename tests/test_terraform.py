@@ -12,8 +12,8 @@ from oci_dashboards.events import SUPPORTED
 
 
 class TerraformNativeTests(unittest.TestCase):
-    def test_no_compute_functions_collector_or_dynamic_group_resources_remain(self):
-        text='\n'.join(path.read_text() for path in (ROOT/'terraform').rglob('*.tf'))
+    def test_activity_has_no_compute_functions_or_dynamic_groups_and_coverage_is_optional(self):
+        text='\n'.join(path.read_text() for path in (ROOT/'terraform').rglob('*.tf') if path.name != 'coverage.tf')
         for forbidden in ('oci_functions_','oci_core_instance','oci_resource_scheduler_','oci_identity_dynamic_group',
                           'oci_objectstorage_bucket','custom_block_backup_health'):
             self.assertNotIn(forbidden,text)
